@@ -65,6 +65,8 @@ class PerformanceMonitor(BaseMonitor):
                         continue
 
                     pid = info["pid"]
+                    if pid == 0:
+                        continue  # Skip System Idle Process
                     active_pids.add(pid)
                     name = info.get("name", "unknown")
                     mem_info = info.get("memory_info")
@@ -75,19 +77,25 @@ class PerformanceMonitor(BaseMonitor):
                     write_bytes = io_info.write_bytes if io_info else 0
 
                     # Delta IO since last sample
-                    prev = self._prev_io.get(pid, (0, 0))
-                    delta_read = max(0, read_bytes - prev[0])
-                    delta_write = max(0, write_bytes - prev[1])
+                    prev = self._prev_io.get(pid)
+                    first_seen = prev is None
+                    if first_seen:
+                        delta_read = 0
+                        delta_write = 0
+                    else:
+                        delta_read = max(0, read_bytes - prev[0])
+                        delta_write = max(0, write_bytes - prev[1])
                     self._prev_io[pid] = (read_bytes, write_bytes)
 
                     # Severity based on CPU
                     severity = Severity.MEDIUM if cpu >= self._cpu_threshold else Severity.LOW
 
-                    # Check IO spike (delta > threshold MB/s)
-                    delta_mb = (delta_read + delta_write) / (1024 * 1024)
-                    io_mbps = delta_mb / self._interval if self._interval > 0 else 0
-                    if io_mbps >= self._io_threshold_mbps:
-                        severity = max(severity, Severity.MEDIUM)
+                    # Check IO spike — skip first sample (delta would be lifetime IO)
+                    if not first_seen:
+                        delta_mb = (delta_read + delta_write) / (1024 * 1024)
+                        io_mbps = delta_mb / self._interval if self._interval > 0 else 0
+                        if io_mbps >= self._io_threshold_mbps:
+                            severity = max(severity, Severity.MEDIUM)
 
                     yield SecurityEvent.create(
                         source="performance_monitor",

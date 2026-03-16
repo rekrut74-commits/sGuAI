@@ -100,6 +100,35 @@ class TestEmitsProcessEvents:
         assert pids == {100, 200}
 
     @pytest.mark.asyncio
+    async def test_skips_system_idle_process(self) -> None:
+        """PID 0 (System Idle Process) should always be skipped."""
+        idle_proc = _make_proc(0, "System Idle Process", 1200.0)
+
+        bus = EventBus(max_queue_size=100)
+        monitor = PerformanceMonitor(bus, _make_config())
+        monitor._running = True
+
+        events: list[SecurityEvent] = []
+
+        with patch("guai.monitors.performance.asyncio.to_thread") as mock_thread:
+            call_count = 0
+
+            async def fake_to_thread(func: Any, *args: Any) -> list[MagicMock]:
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    return [idle_proc]
+                monitor._running = False
+                return []
+
+            mock_thread.side_effect = fake_to_thread
+
+            async for event in monitor.stream():
+                events.append(event)
+
+        assert len(events) == 0
+
+    @pytest.mark.asyncio
     async def test_skips_idle_processes(self) -> None:
         """Processes below _MIN_CPU_PERCENT should be skipped."""
         idle_proc = _make_proc(999, "idle.exe", 0.5)
@@ -228,5 +257,43 @@ class TestEventDataFormat:
         assert data["ram_mb"] == 200.0
         assert data["io_read_bytes"] == 1000
         assert data["io_write_bytes"] == 2000
-        assert "io_delta_read" in data
-        assert "io_delta_write" in data
+        # First-seen PID: delta should be 0 (not lifetime IO)
+        assert data["io_delta_read"] == 0
+        assert data["io_delta_write"] == 0
+
+    @pytest.mark.asyncio
+    async def test_first_seen_io_does_not_escalate_severity(self) -> None:
+        """First time seeing a PID should not trigger IO spike MEDIUM."""
+        # High IO lifetime but first sample — should stay LOW
+        proc = _make_proc(
+            50, "big_io.exe", 5.0,
+            read_bytes=500 * 1024 * 1024,
+            write_bytes=500 * 1024 * 1024,
+        )
+
+        bus = EventBus(max_queue_size=100)
+        monitor = PerformanceMonitor(
+            bus, _make_config(io_threshold_mbps=1.0),
+        )
+        monitor._running = True
+
+        events: list[SecurityEvent] = []
+
+        with patch("guai.monitors.performance.asyncio.to_thread") as mock_thread:
+            call_count = 0
+
+            async def fake_to_thread(func: Any, *args: Any) -> list[MagicMock]:
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    return [proc]
+                monitor._running = False
+                return []
+
+            mock_thread.side_effect = fake_to_thread
+
+            async for event in monitor.stream():
+                events.append(event)
+
+        assert len(events) == 1
+        assert events[0].severity == Severity.LOW
