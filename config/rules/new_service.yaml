@@ -1,0 +1,10 @@
+name: new_service_installed
+description: "New Windows service installed"
+severity: 2  # MEDIUM
+source: event_log
+conditions:
+  category: security
+  data.event_id: 7045
+window_seconds: 0
+threshold: 1
+mitre_technique: "T1543.003"

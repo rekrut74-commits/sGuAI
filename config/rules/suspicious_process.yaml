@@ -1,0 +1,10 @@
+name: suspicious_parent_child
+description: "Command shell spawned from Office application"
+severity: 3  # HIGH
+source: process
+conditions:
+  category: process
+  data.suspicious_parent_child: true
+window_seconds: 0
+threshold: 1
+mitre_technique: "T1059.001"

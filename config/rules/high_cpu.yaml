@@ -1,0 +1,12 @@
+name: high_cpu_process
+description: Process consuming excessive CPU for sustained period
+severity: 2
+source: performance
+conditions:
+  category: performance
+  data.cpu_percent:
+    gte: 80
+window_seconds: 30
+threshold: 3
+mitre_technique: null
+enabled: true

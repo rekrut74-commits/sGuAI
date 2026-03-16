@@ -1,0 +1,12 @@
+name: bandwidth_drop
+description: Significant network throughput drop detected on interface
+severity: 2
+source: bandwidth
+conditions:
+  category: bandwidth
+  severity:
+    gte: 2
+window_seconds: 30
+threshold: 3
+mitre_technique: null
+enabled: true

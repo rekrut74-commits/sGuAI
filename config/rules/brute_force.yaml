@@ -1,0 +1,10 @@
+name: brute_force_detection
+description: "Multiple failed logon attempts in short time window"
+severity: 3  # HIGH
+source: event_log
+conditions:
+  category: auth
+  data.event_id: 4625
+window_seconds: 60
+threshold: 5
+mitre_technique: "T1110.001"

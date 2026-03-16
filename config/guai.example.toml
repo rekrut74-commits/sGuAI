@@ -1,0 +1,59 @@
+# GuAI System Guardian — Konfiguracja
+# Skopiuj do config/guai.toml i dostosuj
+
+[general]
+log_level = "INFO"
+data_dir = "data"
+
+[monitoring]
+# Interwały próbkowania (sekundy)
+network_interval = 5.0
+process_interval = 5.0
+event_log_interval = 3.0
+wifi_interval = 10.0
+bluetooth_interval = 15.0
+dns_interval = 10.0
+performance_interval = 5.0
+bandwidth_interval = 5.0
+latency_interval = 10.0
+
+# Progi performance
+performance_cpu_threshold = 80.0        # CPU% — powyżej = MEDIUM severity
+performance_io_threshold_mbps = 100.0   # IO MB/s — powyżej = MEDIUM severity
+bandwidth_drop_threshold_pct = 50.0     # Spadek throughput vs EMA — powyżej = MEDIUM
+latency_jitter_threshold_ms = 50.0      # Jitter (max-min) ms — powyżej = MEDIUM
+
+# Cele ping (latency monitor)
+latency_targets = ["8.8.8.8", "1.1.1.1"]
+
+# Adaptacyjne próbkowanie
+min_interval = 0.5
+max_interval = 30.0
+
+# Monitory do uruchomienia
+enabled_monitors = ["network", "process", "event_log", "wifi", "bluetooth", "dns", "performance", "bandwidth", "latency"]
+
+[monitoring.event_log]
+# Krytyczne Event IDs do monitorowania
+critical_event_ids = [4625, 4688, 1102, 7045, 4697]
+
+[storage]
+db_path = "data/guai.db"
+retention_days = 30
+batch_size = 50
+
+[event_bus]
+max_queue_size = 10000
+drop_strategy = "oldest"  # "oldest" | "newest" | "none"
+
+[alerts]
+# Deduplikacja
+suppress_window_minutes = 15
+max_alerts_per_minute = 100
+
+# Kanały
+enabled_channels = ["cli"]
+# desktop_notifications = false
+
+[rules]
+rules_dir = "config/rules"

@@ -1,0 +1,12 @@
+name: high_jitter
+description: Network jitter exceeds acceptable threshold
+severity: 2
+source: latency
+conditions:
+  category: latency
+  data.jitter_ms:
+    gte: 50
+window_seconds: 60
+threshold: 3
+mitre_technique: null
+enabled: true

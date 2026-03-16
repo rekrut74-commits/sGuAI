@@ -1,0 +1,12 @@
+name: packet_loss
+description: Packet loss detected to monitoring targets
+severity: 3
+source: latency
+conditions:
+  category: latency
+  data.loss_pct:
+    gt: 0
+window_seconds: 0
+threshold: 1
+mitre_technique: null
+enabled: true

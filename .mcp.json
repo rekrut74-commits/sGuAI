@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "guai": {
+      "command": ".venv/Scripts/python",
+      "args": ["-m", "guai.mcp.server"],
+      "env": {
+        "GUAI_CONFIG": "config/guai.toml"
+      }
+    }
+  }
+}

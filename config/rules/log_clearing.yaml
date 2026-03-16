@@ -1,0 +1,10 @@
+name: log_clearing_detection
+description: "Windows Security log was cleared - potential anti-forensics"
+severity: 4  # CRITICAL
+source: event_log
+conditions:
+  category: security
+  data.event_id: 1102
+window_seconds: 0
+threshold: 1
+mitre_technique: "T1070.001"
